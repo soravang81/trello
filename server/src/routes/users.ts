@@ -30,7 +30,7 @@ user.post("/login", async (req, res) => {
 });
 user.post("/signup", async (req, res) => {
     try {    
-        const { name, email, password, image } = req.body;
+        const { username, email, password } = req.body;
 
         const existingUser = await users.findOne({ email });
         if (existingUser) {
@@ -39,9 +39,9 @@ user.post("/signup", async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-        const newUser = await users.create({ name, email, password: hashedPassword, image });
+        const newUser = await users.create({ name : username, email, password: hashedPassword, });
 
-        res.status(200).send({ message: "User created successfully", user: newUser });
+        res.status(200).send(newUser);
     } catch (error) {
         console.error(error);
         res.status(500).send({ message: "Internal server error" });
