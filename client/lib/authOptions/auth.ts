@@ -87,7 +87,7 @@ export const authOptions:NextAuthOptions = {
                 session.user.name = token.name;
                 session.user.email = token.email;
             }
-            console.log("logged in as userid : ",session.user)
+            // console.log("logged in as userid : ",session.user)
             return session;
         },
     },

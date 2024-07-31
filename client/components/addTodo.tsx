@@ -50,11 +50,13 @@ export function TodoForm({ status, onSubmit, todoToEdit, open, onopenchange, add
       toast.error("Title must not be empty!");
       return;
     }
-
-    const userId = sessionStorage.getItem("userId");
-    if (!userId) {
-      toast.error("Invalid user");
-      return;
+    let userId
+    if(typeof window !== "undefined"){
+      userId = sessionStorage.getItem("userId");
+      if (!userId) {
+        toast.error("Invalid user");
+        return;
+    }
     }
 
     const todoData: Omit<TodoInterface , "createdAt" | "updatedAt" |  any> = {
@@ -98,11 +100,13 @@ export function TodoForm({ status, onSubmit, todoToEdit, open, onopenchange, add
   }, [onopenchange, todoToEdit, status]);
   
   
-  const userId = sessionStorage.getItem("userId")
-    if(!userId) {
-      toast.error("Invalid user") 
+  if(typeof window !== "undefined"){
+    const userId = sessionStorage.getItem("userId");
+    if (!userId) {
+      toast.error("Invalid user");
       return;
-    }
+  }
+  }
 
   const isEditing = !!todoToEdit;
 

@@ -66,8 +66,8 @@ todo.get('/', async (req, res) => {
   });
   
   todo.delete('/', async (req, res) => {
-    const { id, todoId } = req.body;
-  
+    const { id, todoId } = req.query
+    console.log("delete request", id, todoId)
     if (!id) {
       return res.status(400).send({ message: 'User ID is required' });
     }

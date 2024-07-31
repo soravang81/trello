@@ -8,7 +8,10 @@ import { CircleHelp } from "lucide-react"
 
 export const TodoArea = ()=>{
     const greeting = getGreeting()
-    const username = sessionStorage.getItem("username")
+    let username
+    if(typeof window !== "undefined"){
+        username = sessionStorage.getItem("username");
+      }
     return (
         <div className="bg-gray-100 flex flex-col shadown-md gap-4 h-fit rounded-lg p-8">
             <div className="flex justify-between">

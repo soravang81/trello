@@ -7,11 +7,12 @@ import { TodoForm } from "./addTodo";
 import { editTodo } from "@/lib/todo_fn/todosFunctions";
 import { toast } from "sonner";
 import { useMouseInteraction } from "./algo";
-import { Clock3 } from "lucide-react";
+import { Clock3, Trash2 } from "lucide-react";
 import { useRecoilState } from "recoil";
 import { Todos } from "@/lib/recoil/atoms";
+import axios from "axios";
 
-export const TodoCard: React.FC<{
+const TodoCard: React.FC<{
   todo: TodoInterface,
   isDragging?: boolean,
   isBeingDragged?: boolean
@@ -20,6 +21,7 @@ export const TodoCard: React.FC<{
   const { interactionType, handlers } = useMouseInteraction();
   const clickTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [todos, setTodos] = useRecoilState<TodoInterface[]>(Todos);
+  const userId = sessionStorage.getItem('userId');
 
   const {
     attributes,
@@ -35,15 +37,10 @@ export const TodoCard: React.FC<{
   }), [transform, transition]);
 
   const handleClick = useCallback(() => {
-    if (!isDragging && !isBeingDragged) {
-      if (clickTimeoutRef.current) {
-        clearTimeout(clickTimeoutRef.current);
-      }
-      clickTimeoutRef.current = setTimeout(() => {
-        setIsEditing(true);
-      }, 50);
+    if (!isDragging && !isBeingDragged && interactionType === 'clicking') {
+      setIsEditing(true);
     }
-  }, [isDragging, isBeingDragged]);
+  }, [isDragging, isBeingDragged, interactionType]);
 
   useEffect(() => {
     if (interactionType === 'clicking') {
@@ -80,7 +77,20 @@ export const TodoCard: React.FC<{
       setIsEditing(false);
     }
   }, []);
-
+  const handleDelete = useCallback(async (e: React.MouseEvent) => {
+    console.log('Delete button clicked'); // Add this line
+    e.stopPropagation();
+    e.preventDefault();
+    console.log('handleDelete')
+    try {
+      await axios.delete(`${process.env.NEXT_PUBLIC_BACKEND_URL}/todos?id=${userId}?todoId=${todo._id}`);
+      setTodos((prevTodos) => prevTodos.filter((t) => t._id !== todo._id));
+      toast.success("Todo deleted successfully");
+    } catch (error) {
+      console.error(`[TodoCard ${todo._id}] Error deleting todo:`, error);
+      toast.error("Failed to delete todo");
+    }
+  }, [todo._id, setTodos, userId, attributes]);
 
   const priorityClass = useMemo(() => {
     switch (todo.priority) {
@@ -98,12 +108,29 @@ export const TodoCard: React.FC<{
       {...attributes}
       {...listeners}
       {...handlers}
-      onClick={handleClick}
-      className={`bg-white shadow-md rounded-md border p-3 hover:shadow-lg transition-shadow duration-200 cursor-pointer select-none ${isBeingDragged ? 'opacity-50' : ''}`}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          handleClick();
+        }
+      }}
+      className={`relative bg-white shadow-md rounded-md border p-3 hover:shadow-lg transition-shadow duration-200 cursor-pointer select-none ${isBeingDragged ? 'opacity-50' : ''}`}
     >
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          handleDelete(e);
+        }}
+        onMouseDown={(e) => e.stopPropagation()}
+        onMouseMove={(e) => e.stopPropagation()}
+        onMouseUp={(e) => e.stopPropagation()}
+        className="absolute top-2 right-2 p-1 text-gray-500 hover:text-red-500 transition-colors duration-200 z-10"
+        aria-label="Delete todo"
+      >
+        <Trash2 size={16} />
+      </button>
       <div className="mt-2">
         <h3 className="text-xl font-medium">{todo.title}</h3>
-        {todo.description && ( 
+        {todo.description && (
           <p className="text-base text-gray-600 mt-1">{todo.description}</p>
         )}
       </div>
@@ -115,7 +142,7 @@ export const TodoCard: React.FC<{
         )}
       </div>
       {(todo.deadline || todo.updatedAt) && (
-        <div className="mt-2 text-base text-gray-600">
+        <div className="mt-2 text-base text-gray-500">
           {todo.deadline && (
             <p className="flex gap-2 items-center"><Clock3 /> {new Date(todo.deadline).toDateString()}</p>
           )}
@@ -133,3 +160,6 @@ export const TodoCard: React.FC<{
     </div>
   );
 });
+
+TodoCard.displayName = 'TodoCard';
+export default TodoCard;

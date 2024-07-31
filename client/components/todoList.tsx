@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useRecoilState } from "recoil";
-import { TodoCard } from "./todo";
+import TodoCard from "./todo";
 import { isDraggingState, Todos } from "@/lib/recoil/atoms";
 import axios from "axios";
 import {
