@@ -11,12 +11,13 @@ export default function SignupComp() {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
-  const [isError, setIsError] = useState<boolean>(false);
   const [type, setType] = useState<"text" | "password">("password");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
   const handleClick = async (e: FormEvent) => {
     e.preventDefault();
+    setError("");
     try {
       const parsedData = SignupSchema.safeParse({
         email,
@@ -25,37 +26,39 @@ export default function SignupComp() {
       });
       if (!parsedData.success) {
         setError(parsedData.error.issues[0].message);
-        setIsError(true);
-      } else {
-        console.log(email, username, password);
-        const res = await signIn('credentials', {
-          email,
-          password,
-          username,
-          action: "signup",
-          redirect: false
-        });
-        if (res?.ok) {
-          const session = await getSession();
-          console.log("Signup successful");
-          console.log(session?.user);
-          router.push("/");
-          toast.success("Signed up successfully");
-          if (session?.user) {
-            sessionStorage.setItem("userId", session.user.id.toString());
-            sessionStorage.setItem("email", session.user.email?.toString() || "");
-            sessionStorage.setItem("username", session.user.name?.toString() || "");
-          } else {
-            console.log("Invalid session", session);
-          }
-        } else {
-          console.error("Signup failed");
-          toast.error("Signup failed");
+        return;
+      }
+
+      setIsSubmitting(true);
+      const res = await signIn('credentials', {
+        email,
+        password,
+        username,
+        action: "signup",
+        redirect: false
+      });
+
+      if (res?.ok) {
+        const session = await getSession();
+        toast.success("Signed up successfully");
+        if (session?.user) {
+          sessionStorage.setItem("userId", session.user.id);
+          sessionStorage.setItem("email", session.user.email ?? "");
+          sessionStorage.setItem("username", session.user.name ?? "");
         }
+
+        router.push("/");
+        router.refresh();
+      } else {
+        setError("Unable to create your account. This email may already be in use.");
+        toast.error("Signup failed");
       }
     } catch (error) {
       console.error("Error:", error);
+      setError("Unable to create your account right now.");
       toast.error("An error occurred during signup");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -91,12 +94,13 @@ export default function SignupComp() {
               <Eye size={24}/>
             </button>
           </div>
-          {isError && <div className="text-sm text-red-500 text-start pl-2">{`* ${error}`}</div>}
+          {error && <div className="text-sm text-red-500 text-start pl-2">{`* ${error}`}</div>}
           <button
-            className="bg-blue-500 p-4 rounded-lg hover:bg-blue-800 text-white"
+            className="bg-blue-500 p-4 rounded-lg hover:bg-blue-800 text-white disabled:cursor-not-allowed disabled:opacity-70"
+            disabled={isSubmitting}
             onClick={handleClick}
           >
-            Sign Up
+            {isSubmitting ? "Creating account..." : "Sign Up"}
           </button>
         </div>
         <div className="flex justify-center">

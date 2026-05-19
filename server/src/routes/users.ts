@@ -8,6 +8,16 @@ const user = express.Router();
 user.use(express.json())
 user.use(cors())
 
+const sanitizeUser = (dbUser: {
+    _id: unknown;
+    name: string;
+    email: string;
+}) => ({
+    _id: String(dbUser._id),
+    name: dbUser.name,
+    email: dbUser.email,
+});
+
 user.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
@@ -22,7 +32,7 @@ user.post("/login", async (req, res) => {
             return res.status(400).send({ message: "Invalid email or password" });
         }
 
-        res.status(200).send(user);
+        res.status(200).send(sanitizeUser(user));
     } catch (error) {
         console.error(error);
         res.status(500).send({ message: "Internal server error" });
@@ -41,7 +51,7 @@ user.post("/signup", async (req, res) => {
 
         const newUser = await users.create({ name : username, email, password: hashedPassword, });
 
-        res.status(200).send(newUser);
+        res.status(200).send(sanitizeUser(newUser));
     } catch (error) {
         console.error(error);
         res.status(500).send({ message: "Internal server error" });
@@ -70,4 +80,3 @@ user.delete("/" , async (req, res) => {
     }
 })
 export default user;
-
